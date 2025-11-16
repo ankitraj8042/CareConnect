@@ -12,7 +12,41 @@ class DoctorProvider extends ChangeNotifier {
   List<Doctor> get doctors => _doctors;
   Doctor? get selectedDoctor => _selectedDoctor;
   bool get isLoading => _isLoading;
-  String? get errorMessage => _errorMessage;
+  String get errorMessage => _errorMessage ?? '';
+
+  // Get all doctors with location-based sorting
+  Future<void> fetchDoctorsWithLocation({
+    required double latitude,
+    required double longitude,
+    String? specialization,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      String url = '${ApiConstants.doctors}/nearby?latitude=$latitude&longitude=$longitude';
+      
+      if (specialization != null && specialization.isNotEmpty) {
+        url += '&specialization=$specialization';
+      }
+
+      final response = await ApiService.get(url);
+
+      if (response['success']) {
+        _doctors = (response['data'] as List)
+            .map((doc) => Doctor.fromJson(doc))
+            .toList();
+      }
+
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = e.toString();
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
   // Get all doctors with optional filters
   Future<void> fetchDoctors({

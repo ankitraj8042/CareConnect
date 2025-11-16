@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:latlong2/latlong.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/location_picker.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -29,6 +31,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _licenseNumberController = TextEditingController();
   final _experienceController = TextEditingController();
   final _consultationFeeController = TextEditingController();
+  LatLng? _selectedLocation;
+  String _locationStatus = 'Not selected';
 
   // Pharmacist specific
   final _pharmacyNameController = TextEditingController();
@@ -66,11 +70,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
       userData['gender'] = _selectedGender;
       userData['bloodGroup'] = _selectedBloodGroup;
     } else if (_selectedRole == 'doctor') {
+      if (_selectedLocation == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please select your clinic location on the map'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+      
       userData['specialization'] = _selectedSpecialization;
       userData['licenseNumber'] = _licenseNumberController.text.trim();
       userData['experience'] = int.parse(_experienceController.text);
       userData['consultationFee'] = double.parse(_consultationFeeController.text);
       userData['address'] = {'city': '', 'state': ''};
+      userData['location'] = {
+        'type': 'Point',
+        'coordinates': [_selectedLocation!.longitude, _selectedLocation!.latitude]
+      };
     } else if (_selectedRole == 'pharmacist') {
       userData['pharmacyName'] = _pharmacyNameController.text.trim();
       userData['licenseNumber'] = _pharmacyLicenseController.text.trim();
@@ -235,6 +253,89 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 }
                 return null;
               },
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Clinic Location',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _locationStatus,
+                            style: TextStyle(
+                              color: _selectedLocation != null 
+                                  ? Colors.green 
+                                  : Colors.grey,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          final location = await Navigator.push<LatLng>(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => LocationPicker(
+                                initialLocation: _selectedLocation,
+                                onLocationSelected: (location) {
+                                  setState(() {
+                                    _selectedLocation = location;
+                                    _locationStatus =
+                                        'Lat: ${location.latitude.toStringAsFixed(4)}, '
+                                        'Lng: ${location.longitude.toStringAsFixed(4)}';
+                                  });
+                                },
+                              ),
+                            ),
+                          );
+                          if (location != null) {
+                            setState(() {
+                              _selectedLocation = location;
+                              _locationStatus =
+                                  'Lat: ${location.latitude.toStringAsFixed(4)}, '
+                                  'Lng: ${location.longitude.toStringAsFixed(4)}';
+                            });
+                          }
+                        },
+                        icon: const Icon(Icons.location_on),
+                        label: Text(_selectedLocation == null 
+                            ? 'Select Location' 
+                            : 'Change Location'),
+                      ),
+                    ],
+                  ),
+                  if (_selectedLocation != null) ...[
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Patients will be able to see doctors near their location. '
+                      'Make sure to select your correct clinic location.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ],
         );

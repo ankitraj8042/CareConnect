@@ -1,6 +1,92 @@
 const Doctor = require('../models/Doctor.model');
 const User = require('../models/User.model');
 
+// Helper function to calculate distance between two points (Haversine formula)
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Radius of Earth in kilometers
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c; // Distance in km
+}
+
+// @desc    Get nearby doctors with distance calculation
+// @route   GET /api/doctors/nearby
+// @access  Public
+exports.getNearbyDoctors = async (req, res) => {
+  try {
+    const { latitude, longitude, maxDistance, specialization } = req.query;
+
+    if (!latitude || !longitude) {
+      return res.status(400).json({
+        success: false,
+        message: 'Latitude and longitude are required'
+      });
+    }
+
+    const userLat = parseFloat(latitude);
+    const userLon = parseFloat(longitude);
+    const maxDist = maxDistance ? parseInt(maxDistance) * 1000 : 50000; // Convert km to meters, default 50km
+
+    let query = {
+      location: {
+        $near: {
+          $geometry: {
+            type: 'Point',
+            coordinates: [userLon, userLat]
+          },
+          $maxDistance: maxDist
+        }
+      }
+    };
+
+    // Filter by specialization if provided
+    if (specialization) {
+      query.specialization = specialization;
+    }
+
+    const doctors = await Doctor.find(query)
+      .populate('userId', 'name email phone profileImage')
+      .select('-availability')
+      .limit(50); // Limit to 50 nearest doctors
+
+    // Calculate distance for each doctor
+    const doctorsWithDistance = doctors.map(doctor => {
+      const distance = calculateDistance(
+        userLat,
+        userLon,
+        doctor.location.coordinates[1], // latitude
+        doctor.location.coordinates[0]  // longitude
+      );
+
+      return {
+        ...doctor.toObject(),
+        distance: parseFloat(distance.toFixed(2))
+      };
+    });
+
+    // Sort by distance
+    doctorsWithDistance.sort((a, b) => a.distance - b.distance);
+
+    res.status(200).json({
+      success: true,
+      count: doctorsWithDistance.length,
+      data: doctorsWithDistance
+    });
+  } catch (error) {
+    console.error('Error fetching nearby doctors:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching nearby doctors',
+      error: error.message
+    });
+  }
+};
+
 // @desc    Get all doctors with filters
 // @route   GET /api/doctors
 // @access  Public

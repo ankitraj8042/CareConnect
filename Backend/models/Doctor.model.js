@@ -59,11 +59,20 @@ const doctorSchema = new mongoose.Schema({
     type: {
       type: String,
       enum: ['Point'],
+      required: true,
       default: 'Point'
     },
     coordinates: {
       type: [Number], // [longitude, latitude]
-      default: [0, 0]
+      required: [true, 'Location coordinates are required'],
+      validate: {
+        validator: function(coords) {
+          return coords.length === 2 && 
+                 coords[0] >= -180 && coords[0] <= 180 && // longitude
+                 coords[1] >= -90 && coords[1] <= 90;      // latitude
+        },
+        message: 'Invalid coordinates. Format: [longitude, latitude]'
+      }
     }
   },
   availability: [{

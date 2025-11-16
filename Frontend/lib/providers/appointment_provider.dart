@@ -137,6 +137,29 @@ class AppointmentProvider extends ChangeNotifier {
     }
   }
 
+  // Update appointment status
+  Future<bool> updateAppointmentStatus(String appointmentId, String status) async {
+    _errorMessage = '';
+    try {
+      final response = await ApiService.put(
+        ApiConstants.updateAppointment(appointmentId),
+        {'status': status},
+        requiresAuth: true,
+      );
+
+      if (response['success']) {
+        // Reload appointments
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
   // Update appointment
   Future<bool> updateAppointment(String appointmentId, Map<String, dynamic> updates) async {
     _errorMessage = '';

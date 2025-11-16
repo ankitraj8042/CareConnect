@@ -126,19 +126,19 @@ class _DoctorListScreenState extends State<DoctorListScreen> {
           Expanded(
             child: Consumer<DoctorProvider>(
               builder: (context, doctorProvider, child) {
-                if (doctorProvider.isLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+              if (doctorProvider.isLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-                if (doctorProvider.errorMessage != null) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                        const SizedBox(height: 16),
-                        Text(
-                          doctorProvider.errorMessage!,
+              if (doctorProvider.errorMessage.isNotEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                      const SizedBox(height: 16),
+                      Text(
+                          doctorProvider.errorMessage,
                           textAlign: TextAlign.center,
                           style: const TextStyle(fontSize: 16),
                         ),

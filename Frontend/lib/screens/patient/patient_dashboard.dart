@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
-import 'doctor_list_screen.dart';
+import 'doctor_map_screen.dart';
 import 'appointments_screen.dart';
 import 'search_medicine_screen.dart';
 import 'prescriptions_screen.dart';
@@ -99,15 +99,15 @@ class PatientDashboard extends StatelessWidget {
               children: [
                 _buildActionCard(
                   context,
-                  icon: Icons.search,
+                  icon: Icons.map,
                   title: 'Find Doctors',
-                  subtitle: 'Search by specialization',
+                  subtitle: 'View doctors near you on map',
                   color: Colors.blue,
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const DoctorListScreen(),
+                        builder: (context) => const DoctorMapScreen(),
                       ),
                     );
                   },

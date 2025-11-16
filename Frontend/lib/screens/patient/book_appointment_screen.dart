@@ -105,7 +105,7 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(appointmentProvider.errorMessage ?? 'Failed to book appointment'),
+          content: Text(appointmentProvider.errorMessage.isEmpty ? 'Failed to book appointment' : appointmentProvider.errorMessage),
           backgroundColor: Colors.red,
         ),
       );
